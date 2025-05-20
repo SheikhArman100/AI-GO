@@ -54,7 +54,7 @@ func (s *Server) RegisterRoutes() http.Handler {
 			auth.GET("/user", authHandler.UserDetails)
 			//Google OAuth routes
 			auth.GET("/google/signin", authHandler.GoogleSignIn)
-			auth.GET("/google/callback", authHandler.GoogleCallback)	
+			auth.GET("/google/callback", authHandler.GoogleCallback)
 		}
 
 		// User routes
@@ -63,6 +63,8 @@ func (s *Server) RegisterRoutes() http.Handler {
 			user.GET("/", userHandler.HelloUser)
 			// Protected profile route
 			user.GET("/profile", middleware.AuthMiddleware(), userHandler.GetProfile)
+			// Protected update profile route
+			user.PUT("/profile", middleware.AuthMiddleware(), middleware.ValidateRequest(&validation.UpdateProfileRequest{}, validator.New()), userHandler.UpdateProfile)
 		}
 	}
 

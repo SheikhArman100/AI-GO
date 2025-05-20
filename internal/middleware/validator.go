@@ -15,7 +15,7 @@ func ValidateRequest(schema interface{}, validate *validator.Validate) gin.Handl
 	log.Print("ValidateRequest")
 	return func(c *gin.Context) {
 		// Bind JSON to schema
-		if err := c.ShouldBindJSON(schema); err != nil {
+		if err := c.ShouldBind(schema); err != nil {
 			response.ApiError(c, http.StatusBadRequest, "Invalid request payload", err.Error())
 			return
 		}

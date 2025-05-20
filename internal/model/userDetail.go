@@ -15,7 +15,7 @@ type UserDetail struct {
 	UpdatedAt time.Time `json:"updated_at"`
 
 	// Relations
-	User  User   `gorm:"foreignKey:UserID;constraint:OnDelete:CASCADE" json:"user,omitempty"`
+	User  User   `gorm:"foreignKey:UserID;constraint:OnDelete:CASCADE" json:"-"`
 	Image *Image `gorm:"foreignKey:UserDetailID;constraint:OnDelete:CASCADE" json:"image,omitempty"`
 }
 
