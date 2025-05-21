@@ -8,8 +8,8 @@ import (
 type DiskType string
 
 const (
-	DiskTypeLocal DiskType = "LOCAL"
-	DiskTypeS3    DiskType = "S3"
+	DiskTypeLocal DiskType = "local"
+	DiskTypeS3    DiskType = "s3"
 )
 
 // Image model

@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"io"
 	"mime/multipart"
+	"my-project/internal/model"
 	"net/http"
 	"os"
 	"path/filepath"
@@ -119,7 +120,7 @@ func UploadFileLocally(fileHeader *multipart.FileHeader, uploadDir string) (*Upl
 	return &UploadedFile{
 		Path:         dstPath,
 		WebPath:      webPath,
-		DiskType:     "local", // Default to local storage
+		DiskType:     string(model.DiskTypeLocal), // Default to local storage
 		OriginalName: fileHeader.Filename,
 		ModifiedName: newFileName,
 	}, nil
