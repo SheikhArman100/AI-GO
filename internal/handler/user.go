@@ -3,16 +3,13 @@ package handler
 import (
 	"errors"
 	"fmt"
-	"io"
 	"my-project/internal/database"
+	"my-project/internal/helper"
 	"my-project/internal/model"
 	"my-project/internal/response"
 	"my-project/internal/validation"
 	"net/http"
-	"os"
 	"path/filepath"
-	"strings"
-	"time"
 
 	"github.com/gin-gonic/gin"
 	"github.com/golang-jwt/jwt/v5"
@@ -105,9 +102,9 @@ func (h *UserHandler) UpdateProfile(c *gin.Context) {
 		response.ApiError(c, http.StatusInternalServerError, "Failed to start transaction: "+tx.Error.Error())
 		return
 	}
-
+	//fetch user with related data
 	var user model.User
-	if err := tx.Preload("UserDetail").First(&user, userID).Error; err != nil {
+	if err := tx.Preload("UserDetail").Preload("UserDetail.Image").First(&user, userID).Error; err != nil {
 		tx.Rollback()
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			response.ApiError(c, http.StatusNotFound, "User not found")
@@ -155,56 +152,27 @@ func (h *UserHandler) UpdateProfile(c *gin.Context) {
 
 	// Handle Image Upload
 	if req.Image != nil {
-		// Create directory if it doesn't exist
 		uploadDir := filepath.Join(".", "upload", "user") // Relative to project root
-		if err := os.MkdirAll(uploadDir, os.ModePerm); err != nil {
+		//check file type is image ore not
+		if !helper.IsImageFile(req.Image) {
 			tx.Rollback()
-			response.ApiError(c, http.StatusInternalServerError, "Failed to create upload directory: "+err.Error())
+			response.ApiError(c, http.StatusBadRequest, "Invalid file type. Only image files are allowed.")
 			return
 		}
-
-		// Generate unique filename: userID_timestamp_originalFilename
-		ext := filepath.Ext(req.Image.Filename)
-		baseFilename := strings.TrimSuffix(req.Image.Filename, ext)
-		uniqueFilename := fmt.Sprintf("%d_%d_%s%s", userID, time.Now().UnixNano(), baseFilename, ext)
-		destPath := filepath.Join(uploadDir, uniqueFilename)
-
-		// Open source file
-		src, err := req.Image.Open()
+		// Upload image locally
+		uploadedFile, err := helper.UploadFileLocally(req.Image, uploadDir)
 		if err != nil {
 			tx.Rollback()
-			response.ApiError(c, http.StatusInternalServerError, "Failed to open uploaded image: "+err.Error())
+			response.ApiError(c, http.StatusInternalServerError, "Failed to upload image: "+err.Error())
 			return
 		}
-		defer src.Close()
-
-		// Create destination file
-		dst, err := os.Create(destPath)
-		if err != nil {
-			tx.Rollback()
-			response.ApiError(c, http.StatusInternalServerError, "Failed to create image file on server: "+err.Error())
-			return
-		}
-		defer dst.Close()
-
-		// Copy file
-		if _, err = io.Copy(dst, src); err != nil {
-			tx.Rollback()
-			response.ApiError(c, http.StatusInternalServerError, "Failed to save uploaded image: "+err.Error())
-			return
-		}
-
-		// Update or Create Image record for UserDetail
-		imagePathForDB := "/upload/user/" + uniqueFilename
-		
-		fmt.Println(userDetailUpdated)
 
 		if user.UserDetail.Image != nil {
 			// Update existing image record
-			user.UserDetail.Image.Path = imagePathForDB
-			user.UserDetail.Image.DiskType = "local" 
-			user.UserDetail.Image.OriginalName = baseFilename
-			user.UserDetail.Image.ModifiedName = uniqueFilename
+			user.UserDetail.Image.Path = uploadedFile.WebPath
+			user.UserDetail.Image.DiskType = model.DiskType(uploadedFile.DiskType)
+			user.UserDetail.Image.OriginalName = uploadedFile.OriginalName
+			user.UserDetail.Image.ModifiedName = uploadedFile.ModifiedName
 			fmt.Println("Image record updated:", user.UserDetail.Image)
 			if err := tx.Save(user.UserDetail.Image).Error; err != nil {
 				tx.Rollback()
@@ -215,10 +183,10 @@ func (h *UserHandler) UpdateProfile(c *gin.Context) {
 			// Create new image record
 			newImage := model.Image{
 				UserDetailID: &user.UserDetail.ID,
-				Path:         imagePathForDB,
-				DiskType:     "local",
-				OriginalName: baseFilename,
-				ModifiedName: uniqueFilename,
+				Path:         uploadedFile.WebPath,
+				DiskType:     model.DiskType(uploadedFile.DiskType),
+				OriginalName: uploadedFile.OriginalName,
+				ModifiedName: uploadedFile.ModifiedName,
 			}
 			if err := tx.Create(&newImage).Error; err != nil {
 				tx.Rollback()
@@ -231,7 +199,7 @@ func (h *UserHandler) UpdateProfile(c *gin.Context) {
 		userDetailUpdated = true
 	}
 
-	 //* Save UserDetail if it's new (ID=0) or if fields were updated (including image)
+	//* Save UserDetail if it's new (ID=0) or if fields were updated (including image)
 	if user.UserDetail != nil && (user.UserDetail.ID == 0 || userDetailUpdated) {
 		if err := tx.Save(user.UserDetail).Error; err != nil {
 			tx.Rollback()
