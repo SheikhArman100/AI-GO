@@ -25,7 +25,6 @@ type Image struct {
 
 	// Relations
 	UserDetail *UserDetail `gorm:"foreignKey:UserDetailID;constraint:OnDelete:CASCADE" json:"user_detail,omitempty"`
-	// ProductFlavor relation omitted (undefined in schema)
 }
 
 // TableName overrides the table name for Image

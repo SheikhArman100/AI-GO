@@ -28,7 +28,7 @@ type SocialProfile struct {
 	DeletedAt  gorm.DeletedAt `gorm:"index" json:"-"`
 
 	// Relationships
-	User User `gorm:"foreignKey:UserID;constraint:OnDelete:CASCADE" json:"-"` // Exclude from JSON serialization
+	User User `gorm:"foreignKey:UserID;constraint:OnDelete:CASCADE" json:"-"`
 }
 
 // TableName overrides the table name
