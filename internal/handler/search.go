@@ -6,6 +6,7 @@ import (
 	"my-project/internal/helper"
 	"my-project/internal/model"
 	"my-project/internal/response"
+	"my-project/internal/types"
 	"my-project/internal/validation"
 	"net/http"
 
@@ -44,11 +45,11 @@ func (h *SearchHandler) CreateResponse(c *gin.Context) {
 	if req.SearchID == "" {
 		fmt.Println("Creating new search for question:", req.Question)
 		// Get AI response for new search
-		aiResponse,err := helper.GetAiResponse(helper.AiRequestPayload{
+		aiResponse, err := helper.GetAiResponse(helper.AiRequestPayload{
 			Question: req.Question,
 			History:  []helper.HistoryItem{},
 		})
-		
+
 		if err != nil {
 			fmt.Println("Error getting AI response:", err)
 			aiResponse = &helper.AiResponse{} // Provide a fallback to avoid nil dereference
@@ -86,7 +87,6 @@ func (h *SearchHandler) CreateResponse(c *gin.Context) {
 		if newSearch.Responses[0].Charts == nil {
 			newSearch.Responses[0].Charts = []map[string]interface{}{}
 		}
-		
 
 		if err := h.db.DB().Create(&newSearch).Error; err != nil {
 			response.ApiError(c, http.StatusInternalServerError, "Failed to create search")
@@ -126,7 +126,7 @@ func (h *SearchHandler) CreateResponse(c *gin.Context) {
 		}
 
 		// Get AI response with history
-		aiResponse,err := helper.GetAiResponse(helper.AiRequestPayload{
+		aiResponse, err := helper.GetAiResponse(helper.AiRequestPayload{
 			Question: req.Question,
 			History:  history,
 		})
@@ -168,6 +168,60 @@ func (h *SearchHandler) CreateResponse(c *gin.Context) {
 		}
 
 		response.SendResponse(c, http.StatusCreated, true, "Response created successfully", newResponse, nil)
-		
+
 	}
+}
+func (h *SearchHandler) GetAllSearches(c *gin.Context) {
+	// Get user info
+	userInfo, err := helper.GetUserInfoFromContext(c)
+	if err != nil {
+		response.ApiError(c, http.StatusUnauthorized, err.Error())
+		return
+	}
+
+	// Bind query parameters to filters
+	var filters types.SearchFilters
+	if err := c.ShouldBindQuery(&filters); err != nil {
+		response.ApiError(c, http.StatusBadRequest, "Invalid query parameters")
+		return
+	}
+
+	options := helper.PaginationOptions{
+		Page:      filters.Page,
+		Limit:     filters.Limit,
+		SortBy:    filters.SortBy,
+		SortOrder: filters.SortOrder,
+	}
+
+	// Build filter map with IP and Title
+	filterMap := map[string]interface{}{
+		"user_id":    userInfo.ID,
+		"searchTerm": filters.SearchTerm,
+	}
+
+	// Add IP filter if provided
+	if filters.Ip != nil && *filters.Ip != "" {
+		filterMap["ip"] = filters.Ip
+	}
+
+	// Add Title filter if provided
+	if filters.Title != nil && *filters.Title != "" {
+		filterMap["title"] = filters.Title
+	}
+
+	searchFields := []string{"title"}
+
+	result, err := helper.GetPaginatedResults[model.Search](
+		h.db.DB(),
+		options,
+		filterMap,
+		searchFields,
+	)
+
+	if err != nil {
+		response.ApiError(c, http.StatusInternalServerError, "Failed to fetch searches")
+		return
+	}
+
+	response.SendResponse(c, http.StatusOK, true, "Searches fetched successfully", result, nil)
 }
