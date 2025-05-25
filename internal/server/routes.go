@@ -35,6 +35,7 @@ func (s *Server) RegisterRoutes() http.Handler {
 		// Initialize handlers
 		authHandler := handler.NewAuthHandler(s.db)
 		userHandler := handler.NewUserHandler(s.db)
+		searchHandler := handler.NewSearchHandler(s.db)
 
 		// Auth routes
 		auth := v1.Group("/auth")
@@ -66,6 +67,13 @@ func (s *Server) RegisterRoutes() http.Handler {
 			// Protected update profile route
 			user.PUT("/profile", middleware.AuthMiddleware(), middleware.ValidateRequest(&validation.UpdateProfileRequest{}, validator.New()), userHandler.UpdateProfile)
 		}
+
+		//search routes
+		search := v1.Group("/search")
+		{
+			search.POST("/create-response", middleware.AuthMiddleware(), middleware.ValidateRequest(&validation.AddResponseRequest{}, validator.New()), searchHandler.CreateResponse)
+		}
+
 	}
 
 	//This route will catch the error if user hits a route that does not exist in our api.

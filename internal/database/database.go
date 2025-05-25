@@ -57,7 +57,7 @@ func New() Service {
 	}
 
 	// Auto Migrate the schema
-	if err := db.AutoMigrate(&model.User{}, &model.UserDetail{}, &model.RefreshToken{}, &model.Image{},&model.SocialProfile{}); err != nil {
+	if err := db.AutoMigrate(&model.User{}, &model.UserDetail{}, &model.RefreshToken{}, &model.Image{}, &model.SocialProfile{}, &model.Search{}, &model.Response{}); err != nil {
 		log.Fatal("Failed to migrate database schema:", err)
 	}
 

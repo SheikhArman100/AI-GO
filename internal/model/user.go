@@ -31,6 +31,7 @@ type User struct {
 	UserDetail    *UserDetail    `gorm:"foreignKey:UserID;constraint:OnDelete:CASCADE" json:"user_detail,omitempty"`
 	RefreshTokens []RefreshToken `gorm:"foreignKey:UserID;constraint:OnDelete:CASCADE" json:"refresh_tokens,omitempty"`
 	SocialProfiles []SocialProfile `gorm:"foreignKey:UserID;constraint:OnDelete:CASCADE" json:"social_profiles,omitempty"`
+	Searches    []Search       `gorm:"foreignKey:UserID;constraint:OnDelete:CASCADE" json:"searches,omitempty"`
 }
 
 // TableName overrides the table name for User
