@@ -27,7 +27,7 @@ func GetPaginatedResults[T any](
     var count int64
 
     // Build base query with Debug mode
-    query := db.Model(new(T)).Debug()
+    query := db.Model(new(T))
 
     // Apply non-search filters first
     for field, value := range filters {
