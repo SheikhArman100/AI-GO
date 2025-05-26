@@ -73,6 +73,7 @@ func (s *Server) RegisterRoutes() http.Handler {
 		{
 			search.POST("/create-response", middleware.AuthMiddleware(), middleware.ValidateRequest(&validation.AddResponseRequest{}, validator.New()), searchHandler.CreateResponse)
 			search.GET("/all-search", middleware.AuthMiddleware(), searchHandler.GetAllSearches)
+			search.GET("/single-search/:searchId", middleware.AuthMiddleware(), searchHandler.GetSearchByID)
 
 		}
 

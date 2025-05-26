@@ -171,6 +171,7 @@ func (h *SearchHandler) CreateResponse(c *gin.Context) {
 
 	}
 }
+
 func (h *SearchHandler) GetAllSearches(c *gin.Context) {
 	// Get user info
 	userInfo, err := helper.GetUserInfoFromContext(c)
@@ -180,7 +181,11 @@ func (h *SearchHandler) GetAllSearches(c *gin.Context) {
 	}
 
 	// Bind query parameters to filters
-	var filters types.SearchFilters
+	var filters struct {
+		types.CommonFilters
+        Ip    *string `form:"ip"`
+        Title *string `form:"title"`
+	}
 	if err := c.ShouldBindQuery(&filters); err != nil {
 		response.ApiError(c, http.StatusBadRequest, "Invalid query parameters")
 		return
@@ -208,7 +213,7 @@ func (h *SearchHandler) GetAllSearches(c *gin.Context) {
 	if filters.Title != nil && *filters.Title != "" {
 		filterMap["title"] = filters.Title
 	}
-
+    //searchable fields
 	searchFields := []string{"title"}
 
 	result, err := helper.GetPaginatedResults[model.Search](
@@ -224,4 +229,33 @@ func (h *SearchHandler) GetAllSearches(c *gin.Context) {
 	}
 
 	response.SendResponse(c, http.StatusOK, true, "Searches fetched successfully", result, nil)
+}
+
+func (h *SearchHandler) GetSearchByID(c *gin.Context) {
+	// Get user info
+	userInfo, err := helper.GetUserInfoFromContext(c)
+	if err != nil {
+		response.ApiError(c, http.StatusUnauthorized, err.Error())
+		return
+	}
+
+	searchID := c.Param("searchId")
+	if searchID == "" {
+		response.ApiError(c, http.StatusBadRequest, "searchId is required")
+		return
+	}
+
+	var search model.Search
+	if err := h.db.DB().Preload("Responses").First(&search, "id = ?", searchID).Error; err != nil {
+		response.ApiError(c, http.StatusNotFound, "Search not found")
+		return
+	}
+
+	// Validate user ownership
+	if search.UserID != userInfo.ID {
+		response.ApiError(c, http.StatusForbidden, "You are not authorized to access this search")
+		return
+	}
+
+	response.SendResponse(c, http.StatusOK, true, "Search fetched successfully", search, nil)
 }
