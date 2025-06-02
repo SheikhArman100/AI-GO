@@ -1,0 +1,6 @@
+2025-06-02 10:59:53.390	info	D:/GoLang/first-api/internal/database/database.go:81
+[error] failed to initialize database, got error Error 1045 (28000): Access denied for user 'root'@'localhost' (using password: NO)	{"timestamp": "2025-06-02T10:59:53+06:00"}
+2025-06-02 11:01:03.687	info	D:/GoLang/first-api/internal/database/database.go:81
+[error] failed to initialize database, got error Error 1045 (28000): Access denied for user 'root'@'localhost' (using password: NO)	{"timestamp": "2025-06-02T11:01:03+06:00"}
+2025-06-02 11:01:16.507	info	D:/GoLang/first-api/internal/database/database.go:81
+[error] failed to initialize database, got error Error 1045 (28000): Access denied for user 'root'@'localhost' (using password: NO)	{"timestamp": "2025-06-02T11:01:16+06:00"}

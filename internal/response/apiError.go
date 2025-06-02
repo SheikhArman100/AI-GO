@@ -1,10 +1,12 @@
 package response
 
 import (
-	"runtime/debug"
-	"os"
+	"fmt"
+	"my-project/internal/logger"
+	"runtime"
 
 	"github.com/gin-gonic/gin"
+	"go.uber.org/zap"
 )
 
 type ErrorResponse struct {
@@ -15,12 +17,31 @@ type ErrorResponse struct {
 	Stack         string      `json:"stack,omitempty"`
 }
 
+func GetCallerInfo(skip int) string {
+	_, file, line, ok := runtime.Caller(skip)
+	if !ok {
+		return "unknown:0"
+	}
+	return fmt.Sprintf("%s:%d", file, line)
+}
+
 // ApiError sends an immediate error response and aborts further processing
 func ApiError(c *gin.Context, statusCode int, message string, errorMessages ...interface{}) {
-	stack := ""
-	if os.Getenv("ENV") != "production" {
-		stack = string(debug.Stack())
-	}
+	stack := GetCallerInfo(2)
+
+	// Get user ID from context if available
+	user, _ := c.Get("user")
+
+	// Log error with context information
+	logger.ErrorLogger.Error("API Error",
+		zap.Int("statusCode", statusCode),
+		zap.String("message", message),
+		zap.String("ip", c.ClientIP()),
+		zap.String("method", c.Request.Method),
+		zap.String("path", c.Request.URL.Path),
+		zap.Any("user", user),
+		zap.String("stack", stack),
+	)
 
 	errResp := ErrorResponse{
 		Success:    false,
@@ -30,6 +51,9 @@ func ApiError(c *gin.Context, statusCode int, message string, errorMessages ...i
 
 	if len(errorMessages) > 0 {
 		errResp.ErrorMessages = errorMessages[0]
+		// Log additional error messages
+		logger.ErrorLogger.Error("Additional error details",
+			zap.Any("errorMessages", errorMessages[0]))
 	}
 
 	if stack != "" {

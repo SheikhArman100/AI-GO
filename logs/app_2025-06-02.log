@@ -1,0 +1,9 @@
+2025-06-02 10:59:53.292	info	Initializing database service	{"host": "localhost", "port": "3306", "database": "go-project", "username": "root"}
+2025-06-02 10:59:53.292	info	Attempting database connection	{"host": "localhost", "port": "3306"}
+2025-06-02 10:59:53.390	fatal	Database connection failed	{"error": "Error 1045 (28000): Access denied for user 'root'@'localhost' (using password: NO)", "host": "localhost", "port": "3306", "database": "go-project"}
+2025-06-02 11:01:03.670	info	Initializing database service	{"host": "localhost", "port": "3306", "database": "go-project", "username": "root"}
+2025-06-02 11:01:03.670	info	Attempting database connection	{"host": "localhost", "port": "3306"}
+2025-06-02 11:01:03.687	fatal	Database connection failed	{"error": "Error 1045 (28000): Access denied for user 'root'@'localhost' (using password: NO)", "host": "localhost", "port": "3306", "database": "go-project"}
+2025-06-02 11:01:16.490	info	Initializing database service	{"host": "localhost", "port": "3306", "database": "go-project", "username": "root"}
+2025-06-02 11:01:16.490	info	Attempting database connection	{"host": "localhost", "port": "3306"}
+2025-06-02 11:01:16.508	fatal	Database connection failed	{"error": "Error 1045 (28000): Access denied for user 'root'@'localhost' (using password: NO)", "host": "localhost", "port": "3306", "database": "go-project"}
