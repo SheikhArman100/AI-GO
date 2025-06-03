@@ -34,3 +34,7 @@ main
 
 upload/user/*
 !upload/user/.gitkeep
+
+logs/*
+!logs/.gitkeep
+
